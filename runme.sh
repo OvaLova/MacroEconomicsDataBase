@@ -11,7 +11,7 @@ unzip DataSets.zip
 echo
 echo
 echo "################### Creating and populating the SQLite database ###################"
-sqlite3 project.db << EOF
+sqlite3 Macro.db << EOF
 .read schema.sql
 .quit
 EOF
@@ -26,7 +26,7 @@ rm -r -f DataSets
 echo
 echo
 echo "################### Running queries ###################"
-sqlite3 project.db << EOF
+sqlite3 Macro.db << EOF
 .read queries.sql
 .quit
 EOF
