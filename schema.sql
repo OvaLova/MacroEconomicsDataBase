@@ -98,6 +98,7 @@ CREATE TABLE "countries" (
     "id" INTEGER,
     "subject_id" INTEGER,
     "currency" TEXT NOT NULL DEFAULT '???',
+    UNIQUE ("subject_id", "currency"),
     PRIMARY KEY("id"),
     FOREIGN KEY("id") REFERENCES "subjects"("id")
 );
@@ -106,6 +107,7 @@ CREATE TABLE "groups" (
     "id" INTEGER,
     "subject_id" INTEGER,
     "common_currency" TEXT NOT NULL DEFAULT 'No (economic forum)' CHECK("common_currency" IN ('Yes (monetary union)','No (economic forum)', 'No (economic union)')),
+    UNIQUE ("subject_id", "common_currency"),
     PRIMARY KEY("id"),
     FOREIGN KEY("id") REFERENCES "subjects"("id")
 );
@@ -113,6 +115,7 @@ CREATE TABLE "groups" (
 CREATE TABLE "memberships" (
     "group" INTEGER,
     "country" INTEGER,
+    UNIQUE ("group", "country"),
     FOREIGN KEY("group") REFERENCES "groups"("id"),
     FOREIGN KEY("country") REFERENCES "countries"("id")
 );
@@ -122,17 +125,19 @@ CREATE TABLE "indicators" (
     "code" TEXT,
     "name" TEXT,
     "dataset" INTEGER,
+    UNIQUE ("code", "name", "dataset"),
     PRIMARY KEY("id"),
     FOREIGN KEY("dataset") REFERENCES "datasets"("id")
 );
 
 CREATE TABLE "datasets" (
     "id" INTEGER,
-    "name" TEXT NOT NULL UNIQUE,
+    "name" TEXT NOT NULL,
     "standards_compliant" TEXT NOT NULL CHECK("standards_compliant" IN ('yes','no')),
     "year" INT DEFAULT NULL,
     "publisher" TEXT DEFAULT NULL,
     "link" TEXT DEFAULT NULL,
+    UNIQUE ("name", "standards_compliant", "year", "publisher", "link"),
     PRIMARY KEY("id")
 );
 
@@ -142,6 +147,7 @@ CREATE TABLE "measures" (
     "name" TEXT NOT NULL,
     "unit" TEXT NOT NULL,
     "power" TEXT NOT NULL,
+    UNIQUE ("code", "name", "unit", "power"),
     PRIMARY KEY("id")
 );
 
@@ -153,6 +159,7 @@ CREATE TABLE "scopes" (
     "quarter" TEXT DEFAULT '???' CHECK("quarter" IN ('Q1','Q2','Q3','Q4')),
     "month" INT DEFAULT '???' CHECK("month" IN ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')),
     "reference_period" INT,
+    UNIQUE ("frequency", "time", "year", "quarter", "month", "reference_period"),
     PRIMARY KEY("id")
 );
 
@@ -170,6 +177,7 @@ CREATE TABLE "scores" (
     "scope_id" INTEGER,
     "value" NUMERIC,
     "flag_id" INTEGER,
+    UNIQUE ("subject_id", "indicator_id", "measure_id", "scope_id", "value", "flag_id"),
     PRIMARY KEY("id"),
     FOREIGN KEY("subject_id") REFERENCES "subjects"("id"),
     FOREIGN KEY("indicator_id") REFERENCES "indicators"("id"),
@@ -546,7 +554,7 @@ SELECT gdp."row_id", gdp."value" FROM "SNA_GDP_temp" gdp;
 INSERT INTO "flag_ids"
 SELECT gdp."row_id", flg."id" FROM "SNA_GDP_temp" gdp JOIN "flags" flg ON flg."name" = gdp."flag";
 
-INSERT INTO "scores" ("subject_id", "indicator_id", "measure_id", "scope_id", "value", "flag_id")
+INSERT OR IGNORE INTO "scores" ("subject_id", "indicator_id", "measure_id", "scope_id", "value", "flag_id")
 SELECT sbj."subject_id", ind."indicator_id", msr."measure_id", scp."scope_id", val."value", flg."flag_id"
 FROM "values" val
 JOIN "subject_ids" sbj ON sbj."id" = val."id"
@@ -576,7 +584,7 @@ SELECT gov."row_id", gov."value" FROM "SNA_GmainAgg_temp" gov;
 INSERT INTO "flag_ids"
 SELECT gov."row_id", flg."id" FROM "SNA_GmainAgg_temp" gov JOIN "flags" flg ON flg."name" = gov."flag";
 
-INSERT INTO "scores" ("subject_id", "indicator_id", "measure_id", "scope_id", "value", "flag_id")
+INSERT OR IGNORE INTO "scores" ("subject_id", "indicator_id", "measure_id", "scope_id", "value", "flag_id")
 SELECT sbj."subject_id", ind."indicator_id", msr."measure_id", scp."scope_id", val."value", flg."flag_id"
 FROM "values" val
 JOIN "subject_ids" sbj ON sbj."id" = val."id"
